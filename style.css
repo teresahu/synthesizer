@@ -1,0 +1,16 @@
+body { background-color: #fff; overflow: hidden; font: 12px 'Syncopate', sans-serif;}
+#synthbox { position:relative; width: 910px; height: 380px; background: #ddd; border: 3px solid blue; border-radius: 10px; margin: 0 auto;}
+.loaded#synthbox { border-color: #AAA;}
+.error#synthbox { border-color: red;}
+#keybox {width:910px; text-align: center; margin: 0 auto;}
+#blackkeys { position: absolute; z-index: 2; padding-left: 10px; margin-left: 41px;}
+.key { display:inline-block; }
+.black { background: black; width: 40px; height: 150px; margin: 0px 11px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; }
+.spacer { display:inline-block; width: 62px; height: 150px; margin: }
+.white { background: white; width: 60px; height: 250px; border: 1px solid black; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; }
+.pressed { background: gray }
+#githubnotice { width:910px; text-align: center; font-size: 14px; margin-top: 10px; font-weight: bold;}
+#MIDIPlugin { visibility: hidden; }
+h3.inline { display: inline; margin-left: 2%;}
+.span3 { width:33%; text-align: center; float: left; margin: 4% 0%;}
+.clear {clear:all;}

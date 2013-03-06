@@ -1,5 +1,6 @@
 var voices = new Array();
 var audioContext = null;
+var note;
 
 // This is the "initial patch" of the ADSR settings.  YMMV.
 var currentEnvA = 7;
@@ -140,7 +141,7 @@ Voice.prototype.noteOff = function() {
 var currentOctave = 3;
 
 function keyDown( ev ) {
-	var note = keys[ev.keyCode];
+	note = keys[ev.keyCode];
 	if (note)
 		noteOn( note + 12*(3-currentOctave), 0.75 );
 //	console.log( "key down: " + ev.keyCode );
@@ -152,7 +153,7 @@ function keyDown( ev ) {
 }
 
 function keyUp( ev ) {
-	var note = keys[ev.keyCode];
+	note = keys[ev.keyCode];
 	if (note)
 		noteOff( note + 12*(3-currentOctave) );
 //	console.log( "key up: " + ev.keyCode );
@@ -164,7 +165,7 @@ function keyUp( ev ) {
 }
 
 function pointerDown( ev ) {
-	var note = parseInt( ev.target.id.substring( 1 ) );
+	note = parseInt( ev.target.id.substring( 1 ) );
 	if (note != NaN)
 		noteOn( note + 12*(3-currentOctave), 0.75 );
 //	console.log( "mouse down: " + note );
@@ -173,7 +174,7 @@ function pointerDown( ev ) {
 }
 
 function pointerUp( ev ) {
-	var note = parseInt( ev.target.id.substring( 1 ) );
+	note = parseInt( ev.target.id.substring( 1 ) );
 	if (note != NaN)
 		noteOff( note + 12*(3-currentOctave) );
 //	console.log( "mouse up: " + note );
@@ -232,6 +233,23 @@ function initAudio() {
 	}
 	var kbOct = document.getElementById("kbd_oct");
 	kbOct.onchange = function() { currentOctave = document.getElementById("kbd_oct").selectedIndex; }
+}
+
+function setVolume() {
+	var volume = document.getElementById("volume");
+	volNode.gain.value = volume.value;
+}
+
+function wave(waveType) {
+	if (note) {
+		oscillator = audioContext.createOscillator();
+		oscillator.type = waveType;
+		oscillator.frequency.value = frequencyFromNoteNumber(note);
+		console.log(oscillator);
+		oscillator.connect(volNode);
+		volNode.connect(audioContext.destination);
+		oscillator.start(0);
+	}
 }
 
 window.onload=initAudio;
