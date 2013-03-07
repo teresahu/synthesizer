@@ -154,8 +154,8 @@ function keyDown( ev ) {
 	if (note) {
 		noteOn( note + 12*(3-currentOctave), 0.75 );
 		displayFreq();
-		stop(sounds);
-		play(sounds);
+		stopAll();
+		playAll();
 	}
 	var e = document.getElementById( "k" + note );
 	if (e)
@@ -178,8 +178,8 @@ function pointerDown( ev ) {
 	if (note != NaN) {
 		noteOn( note + 12*(3-currentOctave), 0.75 );
 		displayFreq();
-		stop(sounds1);
-		play(sounds1);
+		stopAll();
+		playAll();
 	}
 	ev.target.classList.add("pressed");
 	return false;
@@ -248,14 +248,14 @@ function ringMod(arr) {
 		ringModNode.frequency.value = frequencyFromNoteNumber(note);
 		arr.push(ringModNode);
 		arr.ringModIndex = arr.length-1;
-		stop(arr);
-		play(arr);	 
+		stopAll();
+		playAll();	 
 	}
 	else {
 		arr.splice(arr.ringModIndex, 1);
 		arr.ringModIndex = -999;
-		stop(arr);
-		play(arr);
+		stopAll();
+		playAll();
 	}
 }
 function noise(arr) {
@@ -281,14 +281,14 @@ function ADSR(arr){
 		envNode.gain.setTargetValueAtTime( (currentEnvS/100.0), envAttackEnd, (currentEnvD/100.0)+0.001 );
 		arr.push(envNode);
 		arr.envIndex = arr.length - 1;
-		stop(arr);
-		play(arr);
+		stopAll();
+		playAll();
 	}
 	else {
 		arr.splice(arr.envIndex, 1);
 		arr.envIndex = -999;
-		stop(arr);
-		play(arr);
+		stopAll();
+		playAll();
 	}
 }
 
@@ -296,6 +296,24 @@ function stop(arr) {
 	if (arr.length != 0) {
 		arr[0].disconnect();
 		arr.isPlaying = false;
+	}
+}
+
+function stopAll() {
+	if (sounds1[0] != null) {
+		sounds1[0].disconnect();
+		sounds1.isPlaying = false;
+
+	}
+	if (sounds2[0] != null) {
+		sounds2[0].disconnect();
+		sounds2.isPlaying = false;
+
+	}
+	if (sounds3[0] != null) {
+		sounds3[0].disconnect();
+		sounds3.isPlaying = false;
+
 	}
 }
 
@@ -309,22 +327,35 @@ function play(arr) {
 		for (i=0; i<arr.length-1; i++){
 			arr[i].connect(arr[i+1]);
 		}
-		if (filter == null) {
-			arr[arr.length-1].connect(volNode);
-			volNode.connect(audioContext.destination);
-		}
-		else {
-			arr[arr.length-1].connect(filter);
-			filter.connect(volNode);
-			volNode.connect(audioContext.destination);
-		}
 		arr[0].start(0);
 		arr.isPlaying = true;
+		console.log(arr);
 	}
 }
 
-function togglePlayPause(arr) {
-   var playpause = document.getElementById("playpause");
+function playAll() {
+	play(sounds1);
+	play(sounds2);
+	play(sounds3);
+	var connectNode;
+	if (filter != null)
+		connectNode = filter;
+	else
+		connectNode = volNode;
+	if (sounds1.length != 0)
+		sounds1[sounds1.length-1].connect(connectNode);
+	if (sounds2.length != 0)
+		sounds2[sounds2.length-1].connect(connectNode);
+	if (sounds3.length != 0)
+		sounds3[sounds3.length-1].connect(connectNode);
+	if (filter != null)
+		filter.connect(volNode);
+	volNode.connect(audioContext.destination);
+}
+
+function togglePlayPause(arr, btn) {
+   var playpause = document.getElementById("playpause"+btn);
+   //console.log(playpause);
    if (arr.length == 0) {
 		window.alert("Please first select a sound waveform.")
 	}
@@ -350,6 +381,7 @@ function pass(type) {
 		filter = audioContext.createBiquadFilter();
 		filter.type = type; 
 		filter.frequency.value = 440; // Set cutoff to 440 HZ
+		console.log(filter);
 	}
 }
 

@@ -16,7 +16,7 @@
 
   <div id="synthbox">
     <h3 class="inline">Current Frequency: </h3>
-    <span class="inline" id="freq">400</span> Hz
+    <span class="inline" id="freq">400</span>
     <h3 class="inline">Volume:</h3>
       <input id="volume" min="0" max="1" step=".1" type="range" onchange="volume()" />
     <h3 class="inline">Filters:</h3>
@@ -28,7 +28,7 @@
 
     <div class="span3">
       <h2>#1</h2>
-      <button id="playpause" title="play" onclick="togglePlayPause(sounds1);">Play</button>
+      <button id="playpauseuno" title="play" onclick="togglePlayPause(sounds1, 'uno');">Play</button>
       <input type="button" value="Square wave!" onclick="oscillator(sounds1, 1);">
       <input type="button" value="Sawtooth wave!" onclick="oscillator(sounds1, 2);">
       <input type="button" value="Triangle wave!" onclick="oscillator(sounds1, 3);;">
@@ -38,7 +38,7 @@
 
     <div class="span3">
       <h2>#2</h2>
-      <button id="playpause" title="play" onclick="togglePlayPause(sounds2);">Play</button>
+      <button id="playpausedos" title="play" onclick="togglePlayPause(sounds2, 'dos');">Play</button>
       <input type="button" value="Square wave!" onclick="oscillator(sounds2, 1);">
       <input type="button" value="Sawtooth wave!" onclick="oscillator(sounds2, 2);">
       <input type="button" value="Triangle wave!" onclick="oscillator(sounds2, 3);;">
@@ -48,7 +48,7 @@
 
     <div class="span3">
       <h2>#3</h2>
-      <button id="playpause" title="play" onclick="togglePlayPause(sounds3);">Play</button>
+      <button id="playpausetres" title="play" onclick="togglePlayPause(sounds3, 'tres');">Play</button>
       <input type="button" value="Square wave!" onclick="oscillator(sounds3, 1);">
       <input type="button" value="Sawtooth wave!" onclick="oscillator(sounds3, 2);">
       <input type="button" value="Triangle wave!" onclick="oscillator(sounds3, 3);;">
