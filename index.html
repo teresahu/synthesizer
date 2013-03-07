@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>Synth Template</title> 
+	<title>Web Audio Synthesizer</title> 
   <link href="style.css" rel="stylesheet">
 </head>
 
@@ -15,16 +15,19 @@
   </div>
 
   <div id="synthbox">
+    <h3 class="inline">Frequency: </h3>
+    <span class="inline" id="freq">400</span> Hz
     <h3 class="inline">Volume:</h3>
-    <input id="volume" min="0" max="1" step=".2" type="range" onchange="setVolume()" />
+    <input id="volume" min="0" max="1" step=".1" type="range" onchange="volume(sounds)" />
     <h3 class="inline">Filters:</h3>
     <div class="clear"></div>
 
     <div class="span3">
       <h2>#1</h2>
-      <input type="button" value="Let me hear my square wave!" onclick="wave(1);">
-      <input type="button" value="Let me hear my sawtooth wave!" onclick="wave();">
-      <input type="button" value="Let me hear my triangle wave!" onclick="wave(3);">
+      <button id="playpause" title="play" onclick="togglePlayPause(sounds);">Play</button>
+      <input type="button" value="Let me hear my square wave!" onclick="oscillator(sounds, 1);">
+      <input type="button" value="Let me hear my sawtooth wave!" onclick="oscillator(sounds, 2);">
+      <input type="button" value="Let me hear my triangle wave!" onclick="oscillator(sounds, 3);;">
     </div>
     <div class="span3">
       <h2>#2</h2>
@@ -33,13 +36,15 @@
       <h2>#3</h2>
     </div>
   </div>
-
-  <select id="midiIn"><option>-no MIDI-</option></select>
-  <select id="kbd_oct"><option>+3</option><option>+2</option><option>+1</option><option selected>normal</option><option>-1</option><option>-2</option><option>-3</option></select>
+  
+  
+  Octave:<select id="kbd_oct"><option>+3</option><option>+2</option><option>+1</option><option selected>normal</option><option>-1</option><option>-2</option><option>-3</option></select>
   <div id="MIDIPlugin"></div>
-
+  <p>Resources: <br />
+    <a href="http://www.adobe.com/devnet/html5/articles/html5-multimedia-pt3.html">Working with HTML5 multimedia components – Part 3: Custom controls</a><br />
+    <a href="http://www.html5rocks.com/en/tutorials/webaudio/intro/">Getting Started With Web Audio API</a>
+    </p>
   <script src='http://cwilso.github.com/WebMIDIAPIShim/WebMIDIAPI.js'></script>
-  <script type="text/javascript" src="js/midi.js"></script>
   <script type="text/javascript" src="js/synth.js"></script>
   <script type="text/javascript" src="js/pointerevents.js"></script>
 </body>

@@ -1,6 +1,11 @@
 var voices = new Array();
 var audioContext = null;
-var note;
+var note = 64;
+var sounds = new Array();
+sounds.oscIndex = -999;
+sounds.volIndex= -999;
+sounds.isPlaying = false;
+
 
 // This is the "initial patch" of the ADSR settings.  YMMV.
 var currentEnvA = 7;
@@ -9,6 +14,7 @@ var currentEnvS = 50;
 var currentEnvR = 20;
 
 // end initial patch
+var currentOctave = 3;
 
 // the onscreen keyboard "ASCII-key-to-MIDI-note" conversion array
 var keys = new Array( 256 );
@@ -34,10 +40,6 @@ keys[221] = 78;
 keys[13] = 79;
 keys[220] = 80;
 
-var effectChain = null;
-var revNode = null;
-var revGain = null;
-var revBypassGain = null;
 
 function impulseResponse( duration, decay ) {
     var sampleRate = audioContext.sampleRate;
@@ -61,7 +63,6 @@ function frequencyFromNoteNumber( note ) {
 
 function noteOn( note, velocity ) {
 	if (voices[note] == null) {
-		// Create a new synth node
 		voices[note] = new Voice(note, velocity);
 		var e = document.getElementById( "k" + note );
 		if (e)
@@ -138,14 +139,10 @@ Voice.prototype.noteOff = function() {
 	this.osc.noteOff( release );
 }
 
-var currentOctave = 3;
-
 function keyDown( ev ) {
 	note = keys[ev.keyCode];
 	if (note)
 		noteOn( note + 12*(3-currentOctave), 0.75 );
-//	console.log( "key down: " + ev.keyCode );
-
 	var e = document.getElementById( "k" + note );
 	if (e)
 		e.classList.add("pressed");
@@ -156,8 +153,6 @@ function keyUp( ev ) {
 	note = keys[ev.keyCode];
 	if (note)
 		noteOff( note + 12*(3-currentOctave) );
-//	console.log( "key up: " + ev.keyCode );
-
 	var e = document.getElementById( "k" + note );
 	if (e)
 		e.classList.remove("pressed");
@@ -168,7 +163,6 @@ function pointerDown( ev ) {
 	note = parseInt( ev.target.id.substring( 1 ) );
 	if (note != NaN)
 		noteOn( note + 12*(3-currentOctave), 0.75 );
-//	console.log( "mouse down: " + note );
 	ev.target.classList.add("pressed");
 	return false;
 }
@@ -177,7 +171,6 @@ function pointerUp( ev ) {
 	note = parseInt( ev.target.id.substring( 1 ) );
 	if (note != NaN)
 		noteOff( note + 12*(3-currentOctave) );
-//	console.log( "mouse up: " + note );
 	ev.target.classList.remove("pressed");
 	return false;
 }
@@ -193,37 +186,15 @@ function initAudio() {
 	window.addEventListener('keydown', keyDown, false);
 	window.addEventListener('keyup', keyUp, false);
 
-	// set up the master effects chain for all voices to connect to.
-
-	// connection point for all voices
 	effectChain = audioContext.createGainNode();
-
-	// convolver for a global reverb - just an example "global effect"
-    revNode = audioContext.createGainNode(); // createConvolver();
-
-    // gain for reverb
-	revGain = audioContext.createGainNode();
-	revGain.gain.value = 0.1;
-
-	// gain for reverb bypass.  Balance between this and the previous = effect mix.
-	revBypassGain = audioContext.createGainNode();
-
-	// overall volume control node
     volNode = audioContext.createGainNode();
-    volNode.gain.value = 0.25;
+    volNode.gain.value = 0.25;    
+    effectChain.connect( volNode );
 
-    effectChain.connect( revNode );
-    effectChain.connect( revBypassGain );
-    revNode.connect( revGain );
-    revGain.connect( volNode );
-    revBypassGain.connect( volNode );
-
-    // hook it up to the "speakers"
     volNode.connect( audioContext.destination );
 
     // Synthesize a reverb impulse response (could use XHR to download one).
 //	revNode.buffer = impulseResponse( 5.0, 2.0 );
-
 	synthBox = document.getElementById("synthbox");
 
 	var keys = document.querySelectorAll( ".key" );
@@ -240,16 +211,84 @@ function setVolume() {
 	volNode.gain.value = volume.value;
 }
 
-function wave(waveType) {
-	if (note) {
-		oscillator = audioContext.createOscillator();
-		oscillator.type = waveType;
-		oscillator.frequency.value = frequencyFromNoteNumber(note);
-		console.log(oscillator);
-		oscillator.connect(volNode);
-		volNode.connect(audioContext.destination);
-		oscillator.start(0);
+function oscillator(arr, type) {
+	if ((arr.oscIndex == -999) || (arr.length == 0)) {
+		oscNode = audioContext.createOscillator();
+		oscNode.type = type;
+		oscNode.frequency.value = frequencyFromNoteNumber(note);
+		arr.push(oscNode);
+		arr.oscIndex = arr.length-1;
+		volume(arr);
 	}
+	else {
+		arr[arr.oscIndex].type = type;
+		arr[arr.oscIndex].frequency.value = frequencyFromNoteNumber(note);
+	}
+}
+
+function volume(arr) {
+	if (arr.length == 0) {
+		return;
+	}
+	else if (arr.volIndex == -999) {
+		volNode = audioContext.createGainNode();
+	    volNode.gain.value = document.getElementById("volume").value;
+	    arr.push(volNode);
+	    arr.volIndex = arr.length-1; 
+	}
+	else {
+		arr[arr.volIndex].gain.value = document.getElementById("volume").value;
+	}
+}
+
+function addADSR(arr){
+	envNode = audioContext.createGainNode();
+	var now = audioContext.currentTime;
+	var envAttackEnd = now + (currentEnvA/10.0);
+	envNode.gain.value = 0.0;
+	envNode.gain.setValueAtTime( 0.0, now );
+	envNode.gain.linearRampToValueAtTime( 1.0, envAttackEnd );
+	envNode.gain.setTargetValueAtTime( (currentEnvS/100.0), envAttackEnd, (currentEnvD/100.0)+0.001 );
+	arr.push(envNode);
+	arr.envIndex = arr.length - 1;
+}
+
+function removeADSR(arr){
+	arr.splice(arr.envIndex, 1);
+	envIndex = -999;
+}
+
+function stop(arr) {
+	arr[0].stop(0);
+	arr.isPlaying = false;
+}
+
+function play(arr) {
+	for (i=0; i<arr.length-1; i++){
+		arr[i].connect(arr[i+1]);
+	}
+	arr[arr.length-1].connect(audioContext.destination);
+	arr[0].start(0);
+	arr.isPlaying = true;
+}
+
+function togglePlayPause(arr) {
+   var playpause = document.getElementById("playpause");
+   if (arr.isPlaying) {
+      playpause.title = "Play";
+      playpause.innerHTML = "Play";
+      stop(arr);
+   }
+   else {
+      playpause.title = "Stop";
+      playpause.innerHTML = "Stop";
+      play(sounds);
+   }
+}
+
+function displayFreq() {
+	var freq = document.getElementById("freq");
+	freq.innerHTML = Math.round(frequencyFromNoteNumber(note))+ "Hz";
 }
 
 window.onload=initAudio;
