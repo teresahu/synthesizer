@@ -1,11 +1,21 @@
 var voices = new Array();
 var audioContext = null;
 var note = 64;
-var sounds = new Array();
-sounds.oscIndex = -999;
-sounds.volIndex= -999;
-sounds.isPlaying = false;
+var volNode;
+var filter = null;
 
+var sounds1 = new Array();
+sounds1.oscIndex = -999;
+sounds1.volIndex= -999;
+sounds1.isPlaying = false;
+var sounds2 = new Array();
+sounds2.oscIndex = -999;
+sounds2.volIndex= -999;
+sounds2.isPlaying = false;
+var sounds3 = new Array();
+sounds3.oscIndex = -999;
+sounds3.volIndex= -999;
+sounds3.isPlaying = false;
 
 // This is the "initial patch" of the ADSR settings.  YMMV.
 var currentEnvA = 7;
@@ -141,8 +151,12 @@ Voice.prototype.noteOff = function() {
 
 function keyDown( ev ) {
 	note = keys[ev.keyCode];
-	if (note)
+	if (note) {
 		noteOn( note + 12*(3-currentOctave), 0.75 );
+		displayFreq();
+		stop(sounds);
+		play(sounds);
+	}
 	var e = document.getElementById( "k" + note );
 	if (e)
 		e.classList.add("pressed");
@@ -161,8 +175,12 @@ function keyUp( ev ) {
 
 function pointerDown( ev ) {
 	note = parseInt( ev.target.id.substring( 1 ) );
-	if (note != NaN)
+	if (note != NaN) {
 		noteOn( note + 12*(3-currentOctave), 0.75 );
+		displayFreq();
+		stop(sounds1);
+		play(sounds1);
+	}
 	ev.target.classList.add("pressed");
 	return false;
 }
@@ -206,11 +224,6 @@ function initAudio() {
 	kbOct.onchange = function() { currentOctave = document.getElementById("kbd_oct").selectedIndex; }
 }
 
-function setVolume() {
-	var volume = document.getElementById("volume");
-	volNode.gain.value = volume.value;
-}
-
 function oscillator(arr, type) {
 	if ((arr.oscIndex == -999) || (arr.length == 0)) {
 		oscNode = audioContext.createOscillator();
@@ -218,7 +231,6 @@ function oscillator(arr, type) {
 		oscNode.frequency.value = frequencyFromNoteNumber(note);
 		arr.push(oscNode);
 		arr.oscIndex = arr.length-1;
-		volume(arr);
 	}
 	else {
 		arr[arr.oscIndex].type = type;
@@ -226,55 +238,97 @@ function oscillator(arr, type) {
 	}
 }
 
-function volume(arr) {
-	if (arr.length == 0) {
+function ringMod(arr) {
+	oscillator(arr, 1);
+	if (arr.length == 0)
 		return;
-	}
-	else if (arr.volIndex == -999) {
-		volNode = audioContext.createGainNode();
-	    volNode.gain.value = document.getElementById("volume").value;
-	    arr.push(volNode);
-	    arr.volIndex = arr.length-1; 
+	else if (document.getElementById('ringMod').checked) {
+		ringModNode = audioContext.createOscillator();
+		ringModNode.type = 3;
+		ringModNode.frequency.value = frequencyFromNoteNumber(note);
+		arr.push(ringModNode);
+		arr.ringModIndex = arr.length-1;
+		stop(arr);
+		play(arr);	 
 	}
 	else {
-		arr[arr.volIndex].gain.value = document.getElementById("volume").value;
+		arr.splice(arr.ringModIndex, 1);
+		arr.ringModIndex = -999;
+		stop(arr);
+		play(arr);
 	}
 }
-
-function addADSR(arr){
-	envNode = audioContext.createGainNode();
-	var now = audioContext.currentTime;
-	var envAttackEnd = now + (currentEnvA/10.0);
-	envNode.gain.value = 0.0;
-	envNode.gain.setValueAtTime( 0.0, now );
-	envNode.gain.linearRampToValueAtTime( 1.0, envAttackEnd );
-	envNode.gain.setTargetValueAtTime( (currentEnvS/100.0), envAttackEnd, (currentEnvD/100.0)+0.001 );
-	arr.push(envNode);
-	arr.envIndex = arr.length - 1;
+function noise(arr) {
+	var length =  2 * audioContext.sampleRate;
+    noiseBuffer = audioContext.createBuffer( 1, length, audioContext.sampleRate);
+    var bufferData = noiseBuffer.getChannelData( 0 );
+    for (var i = 0; i < length; ++i) {
+    bufferData[i] = (2*Math.random() - 1);
+	}
+	arr.push(noiseBuffer);
 }
 
-function removeADSR(arr){
-	arr.splice(arr.envIndex, 1);
-	envIndex = -999;
+function ADSR(arr){
+	if (arr.length == 0)
+		return;
+	else if (document.getElementById('ADSR').checked) {        
+		envNode = audioContext.createGainNode();
+		var now = audioContext.currentTime;
+		var envAttackEnd = now + (currentEnvA/10.0);
+		envNode.gain.value = 0.0;
+		envNode.gain.setValueAtTime( 0.0, now );
+		envNode.gain.linearRampToValueAtTime( 1.0, envAttackEnd );
+		envNode.gain.setTargetValueAtTime( (currentEnvS/100.0), envAttackEnd, (currentEnvD/100.0)+0.001 );
+		arr.push(envNode);
+		arr.envIndex = arr.length - 1;
+		stop(arr);
+		play(arr);
+	}
+	else {
+		arr.splice(arr.envIndex, 1);
+		arr.envIndex = -999;
+		stop(arr);
+		play(arr);
+	}
 }
 
 function stop(arr) {
-	arr[0].stop(0);
-	arr.isPlaying = false;
+	if (arr.length != 0) {
+		arr[0].disconnect();
+		arr.isPlaying = false;
+	}
+}
+
+function volume() {
+	volNode = audioContext.createGainNode();
+	volNode.gain.value = document.getElementById("volume").value;
 }
 
 function play(arr) {
-	for (i=0; i<arr.length-1; i++){
-		arr[i].connect(arr[i+1]);
+	if (arr.length != 0) {
+		for (i=0; i<arr.length-1; i++){
+			arr[i].connect(arr[i+1]);
+		}
+		if (filter == null) {
+			arr[arr.length-1].connect(volNode);
+			volNode.connect(audioContext.destination);
+		}
+		else {
+			arr[arr.length-1].connect(filter);
+			filter.connect(volNode);
+			volNode.connect(audioContext.destination);
+		}
+		arr[0].start(0);
+		arr.isPlaying = true;
 	}
-	arr[arr.length-1].connect(audioContext.destination);
-	arr[0].start(0);
-	arr.isPlaying = true;
 }
 
 function togglePlayPause(arr) {
    var playpause = document.getElementById("playpause");
-   if (arr.isPlaying) {
+   if (arr.length == 0) {
+		window.alert("Please first select a sound waveform.")
+	}
+   else if (arr.isPlaying) {
       playpause.title = "Play";
       playpause.innerHTML = "Play";
       stop(arr);
@@ -282,13 +336,21 @@ function togglePlayPause(arr) {
    else {
       playpause.title = "Stop";
       playpause.innerHTML = "Stop";
-      play(sounds);
+      play(arr);
    }
 }
 
 function displayFreq() {
 	var freq = document.getElementById("freq");
 	freq.innerHTML = Math.round(frequencyFromNoteNumber(note))+ "Hz";
+}
+
+function pass(type) {
+	if (type != null) {
+		filter = audioContext.createBiquadFilter();
+		filter.type = type; 
+		filter.frequency.value = 440; // Set cutoff to 440 HZ
+	}
 }
 
 window.onload=initAudio;
