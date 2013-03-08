@@ -1,6 +1,6 @@
 var voices = new Array();
 var audioContext = null;
-var note = 64;
+var note = 72;
 var volNode;
 var filter = null;
 
@@ -8,14 +8,17 @@ var sounds1 = new Array();
 sounds1.oscIndex = -999;
 sounds1.volIndex= -999;
 sounds1.isPlaying = false;
+sounds1.noiseIndex = -999;
 var sounds2 = new Array();
 sounds2.oscIndex = -999;
 sounds2.volIndex= -999;
 sounds2.isPlaying = false;
+sounds1.noiseIndex = -999;
 var sounds3 = new Array();
 sounds3.oscIndex = -999;
 sounds3.volIndex= -999;
 sounds3.isPlaying = false;
+sounds1.noiseIndex = -999;
 
 // This is the "initial patch" of the ADSR settings.  YMMV.
 var currentEnvA = 7;
@@ -225,6 +228,10 @@ function initAudio() {
 }
 
 function oscillator(arr, type) {
+	if (arr.noiseIndex != -999) {
+		arr.splice(arr.noiseIndex, 1);
+		arr.noiseIndex = -999;
+	}
 	if ((arr.oscIndex == -999) || (arr.length == 0)) {
 		oscNode = audioContext.createOscillator();
 		oscNode.type = type;
@@ -259,13 +266,20 @@ function ringMod(arr) {
 	}
 }
 function noise(arr) {
+	if (arr.length == 0)
+		oscillator(arr,1);
 	var length =  2 * audioContext.sampleRate;
     noiseBuffer = audioContext.createBuffer( 1, length, audioContext.sampleRate);
     var bufferData = noiseBuffer.getChannelData( 0 );
     for (var i = 0; i < length; ++i) {
-    bufferData[i] = (2*Math.random() - 1);
+    	bufferData[i] = (2*Math.random() - 1);
 	}
-	arr.push(noiseBuffer);
+	var noiseNode = audioContext.createBiquadFilter();
+	noiseNode.buffer = noiseBuffer;
+	noiseNode.type = 0; 
+	noiseNode.frequency.value = frequencyFromNoteNumber(note); // Set cutoff to 440 HZ
+	arr.push(noiseNode);
+	arr.noiseIndex = arr.length-1;
 }
 
 function ADSR(arr){
@@ -289,13 +303,6 @@ function ADSR(arr){
 		arr.envIndex = -999;
 		stopAll();
 		playAll();
-	}
-}
-
-function stop(arr) {
-	if (arr.length != 0) {
-		arr[0].disconnect();
-		arr.isPlaying = false;
 	}
 }
 
@@ -327,7 +334,6 @@ function play(arr) {
 		for (i=0; i<arr.length-1; i++){
 			arr[i].connect(arr[i+1]);
 		}
-		arr[0].start(0);
 		arr.isPlaying = true;
 		console.log(arr);
 	}
@@ -338,19 +344,25 @@ function playAll() {
 	play(sounds2);
 	play(sounds3);
 	var connectNode;
+	volNode.connect(audioContext.destination);
 	if (filter != null)
 		connectNode = filter;
 	else
 		connectNode = volNode;
-	if (sounds1.length != 0)
+	if (sounds1.length != 0) {
 		sounds1[sounds1.length-1].connect(connectNode);
-	if (sounds2.length != 0)
+		sounds1[0].start(0);
+	}
+	if (sounds2.length != 0) {
 		sounds2[sounds2.length-1].connect(connectNode);
-	if (sounds3.length != 0)
+		sounds2[0].start(0);
+	}
+	if (sounds3.length != 0) {
 		sounds3[sounds3.length-1].connect(connectNode);
+		sounds3[0].start(0);
+	}
 	if (filter != null)
 		filter.connect(volNode);
-	volNode.connect(audioContext.destination);
 }
 
 function togglePlayPause(arr, btn) {
@@ -362,12 +374,12 @@ function togglePlayPause(arr, btn) {
    else if (arr.isPlaying) {
       playpause.title = "Play";
       playpause.innerHTML = "Play";
-      stop(arr);
+      stopAll();
    }
    else {
       playpause.title = "Stop";
       playpause.innerHTML = "Stop";
-      play(arr);
+      playAll();
    }
 }
 
@@ -383,6 +395,12 @@ function pass(type) {
 		filter.frequency.value = 440; // Set cutoff to 440 HZ
 		console.log(filter);
 	}
+}
+
+function updateNote(arr) {
+	arr[oscIndex].frequency.value = frequencyFromNoteNumber(note);
+	arr[ringModIndex].frequency.value = frequencyFromNoteNumber(note);
+
 }
 
 window.onload=initAudio;

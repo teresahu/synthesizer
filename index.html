@@ -16,7 +16,7 @@
 
   <div id="synthbox">
     <h3 class="inline">Current Frequency: </h3>
-    <span class="inline" id="freq">400</span>
+    <span class="inline" id="freq">523.25Hz</span>
     <h3 class="inline">Volume:</h3>
       <input id="volume" min="0" max="1" step=".1" type="range" onchange="volume()" />
     <h3 class="inline">Filters:</h3>
@@ -31,7 +31,9 @@
       <button id="playpauseuno" title="play" onclick="togglePlayPause(sounds1, 'uno');">Play</button>
       <input type="button" value="Square wave!" onclick="oscillator(sounds1, 1);">
       <input type="button" value="Sawtooth wave!" onclick="oscillator(sounds1, 2);">
-      <input type="button" value="Triangle wave!" onclick="oscillator(sounds1, 3);;">
+      <input type="button" value="Triangle wave!" onclick="oscillator(sounds1, 3);">
+      <input type="button" value="Noise!" onclick="noise(sounds1);">
+      <br />
       <input id="ADSR" type="checkbox" onchange="ADSR(sounds1);"> ADSR Envelope
       <input id="ringMod" type="checkbox" onchange="ringMod(sounds1);"> Ring Modulation
     </div>
@@ -41,7 +43,9 @@
       <button id="playpausedos" title="play" onclick="togglePlayPause(sounds2, 'dos');">Play</button>
       <input type="button" value="Square wave!" onclick="oscillator(sounds2, 1);">
       <input type="button" value="Sawtooth wave!" onclick="oscillator(sounds2, 2);">
-      <input type="button" value="Triangle wave!" onclick="oscillator(sounds2, 3);;">
+      <input type="button" value="Triangle wave!" onclick="oscillator(sounds2, 3);">
+      <input type="button" value="Noise!" onclick="noise(sounds2);">
+      <br />
       <input id="ADSR" type="checkbox" onchange="ADSR(sounds2);"> ADSR Envelope
       <input id="ringMod" type="checkbox" onchange="ringMod(sounds2);"> Ring Modulation
     </div>
@@ -51,7 +55,10 @@
       <button id="playpausetres" title="play" onclick="togglePlayPause(sounds3, 'tres');">Play</button>
       <input type="button" value="Square wave!" onclick="oscillator(sounds3, 1);">
       <input type="button" value="Sawtooth wave!" onclick="oscillator(sounds3, 2);">
-      <input type="button" value="Triangle wave!" onclick="oscillator(sounds3, 3);;">
+      <input type="button" value="Triangle wave!
+      " onclick="oscillator(sounds3, 3);">
+      <input type="button" value="Noise!" onclick="noise(sounds3);">
+      <br />
       <input id="ADSR" type="checkbox" onchange="ADSR(sounds3);"> ADSR Envelope
       <input id="ringMod" type="checkbox" onchange="ringMod(sounds3);"> Ring Modulation
     </div>
