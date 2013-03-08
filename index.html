@@ -15,12 +15,14 @@
   </div>
 
   <div id="synthbox">
-    <h3 class="inline">Current Frequency: </h3>
+    <h3 class="inline">Frequency: </h3>
     <span class="inline" id="freq">523.25Hz</span>
     <h3 class="inline">Volume:</h3>
-      <input id="volume" min="0" max="1" step=".1" type="range" onchange="volume()" />
+    <input id="volume" min="0" max="1" step=".01" type="range" onchange="volume()" />
     <h3 class="inline">Filters:</h3>
-    <button id="lnone" title="play" onclick="pass(null);">None</button>
+    Freq: <span id="filterfreq">800Hz</span>
+    <input id="filterfreq-slider" min="20" max="20000" step="1" type="range" value="800" onchange="updateFreq()" />
+    <button id="none" title="play" onclick="pass(null);">None</button>
     <button id="lowpass" title="play" onclick="pass(0);">Low Pass</button>
     <button id="highpass" title="play" onclick="pass(1);">High Pass</button>
     <button id="bandpass" title="play" onclick="pass(2);">Band Pass</button>

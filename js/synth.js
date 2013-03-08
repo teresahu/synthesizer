@@ -3,22 +3,24 @@ var audioContext = null;
 var note = 72;
 var volNode;
 var filter = null;
-
 var sounds1 = new Array();
 sounds1.oscIndex = -999;
 sounds1.volIndex= -999;
 sounds1.isPlaying = false;
 sounds1.noiseIndex = -999;
+sounds1.ringModIndex = -999;
 var sounds2 = new Array();
 sounds2.oscIndex = -999;
 sounds2.volIndex= -999;
 sounds2.isPlaying = false;
-sounds1.noiseIndex = -999;
+sounds2.noiseIndex = -999;
+sounds2.ringModIndex = -999;
 var sounds3 = new Array();
 sounds3.oscIndex = -999;
 sounds3.volIndex= -999;
 sounds3.isPlaying = false;
-sounds1.noiseIndex = -999;
+sounds3.noiseIndex = -999;
+sounds3.ringModIndex = -999;
 
 // This is the "initial patch" of the ADSR settings.  YMMV.
 var currentEnvA = 7;
@@ -157,6 +159,9 @@ function keyDown( ev ) {
 	if (note) {
 		noteOn( note + 12*(3-currentOctave), 0.75 );
 		displayFreq();
+		updateNote(sounds1);
+		updateNote(sounds2);
+		updateNote(sounds3);
 		stopAll();
 		playAll();
 	}
@@ -181,6 +186,9 @@ function pointerDown( ev ) {
 	if (note != NaN) {
 		noteOn( note + 12*(3-currentOctave), 0.75 );
 		displayFreq();
+		updateNote(sounds1);
+		updateNote(sounds2);
+		updateNote(sounds3);
 		stopAll();
 		playAll();
 	}
@@ -327,6 +335,8 @@ function stopAll() {
 function volume() {
 	volNode = audioContext.createGainNode();
 	volNode.gain.value = document.getElementById("volume").value;
+	stopAll();
+	playAll();
 }
 
 function play(arr) {
@@ -392,15 +402,32 @@ function pass(type) {
 	if (type != null) {
 		filter = audioContext.createBiquadFilter();
 		filter.type = type; 
-		filter.frequency.value = 440; // Set cutoff to 440 HZ
-		console.log(filter);
+		var freq = document.getElementById("filterfreq-slider").value;
+		filter.frequency.value = freq; // Set cutoff to 440 HZ
+		stopAll();
+		playAll();
+	}
+	else {
+		filter = null;
 	}
 }
 
-function updateNote(arr) {
-	arr[oscIndex].frequency.value = frequencyFromNoteNumber(note);
-	arr[ringModIndex].frequency.value = frequencyFromNoteNumber(note);
+function updateFreq() {
+	var freq = document.getElementById("filterfreq-slider").value;
+	if (filter != null)
+		filter.frequency.value = freq;
+	document.getElementById("filterfreq").innerHTML = Math.round(freq)+"Hz";
+}
 
+function updateNote(arr) {
+	if (arr.oscIndex != -999)
+		arr[parseInt(arr.oscIndex)].frequency.value = frequencyFromNoteNumber(note);
+	if (arr.ringModIndex != -999)
+		arr[parseInt(arr.ringModIndex)].frequency.value = frequencyFromNoteNumber(note);
+	if (arr.noiseIndex != -999)
+		arr[parseInt(arr.noiseIndex)].frequency.value = frequencyFromNoteNumber(note);
+	if (filter != null)
+		filter.frequency.value = frequencyFromNoteNumber(note);
 }
 
 window.onload=initAudio;
